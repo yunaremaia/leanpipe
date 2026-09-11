@@ -1,0 +1,23 @@
+Metadata-Version: 2.4
+Name: leanpipe
+Version: 0.1.0
+Summary: CLI output filter for AI agents — strip noise, keep signal, save tokens.
+Author-email: Yunare Maia <yunare@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yunaremaia/leanpipe
+Keywords: cli,ai,agent,filter,tokens,productivity
+Classifier: Development Status :: 4 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Software Development :: Quality Assurance
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.0
+Requires-Dist: pyyaml>=6.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
