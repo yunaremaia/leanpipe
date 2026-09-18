@@ -3,11 +3,18 @@ from __future__ import annotations
 
 import os
 import re
+from functools import lru_cache
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
 import yaml
+
+
+@lru_cache(maxsize=1024)
+def get_compiled_pattern(pattern: str, flags: int = re.MULTILINE) -> re.Pattern:
+    """Compile and cache regular expression patterns with bounded LRU eviction."""
+    return re.compile(pattern, flags)
 
 
 @dataclass
@@ -20,7 +27,7 @@ class FilterRule:
     compiled: re.Pattern = field(init=False, repr=False)
 
     def __post_init__(self):
-        self.compiled = re.compile(self.pattern, re.MULTILINE)
+        self.compiled = get_compiled_pattern(self.pattern, re.MULTILINE)
 
 
 @dataclass
