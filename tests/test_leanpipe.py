@@ -18,6 +18,15 @@ from leanpipe.filters import (
 
 
 class TestFilterRule:
+    def test_compiled_pattern_caching(self):
+        from leanpipe.filters import get_compiled_pattern
+        p1 = get_compiled_pattern(r"^DEBUG:\s*")
+        p2 = get_compiled_pattern(r"^DEBUG:\s*")
+        assert p1 is p2
+        rule1 = FilterRule("r1", r"^DEBUG:\s*", "drop_line")
+        rule2 = FilterRule("r2", r"^DEBUG:\s*", "drop_line")
+        assert rule1.compiled is rule2.compiled
+
     def test_drop_line(self):
         rule = FilterRule("test", r"DEBUG", "drop_line")
         text = "INFO: ok\nDEBUG: noise\nINFO: done"
@@ -139,11 +148,13 @@ class TestCLI:
         assert "saved_chars" in data
         assert "saved_pct" in data
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="echo is a shell built-in on Windows")
     def test_run_command(self):
         result = self.runner.invoke(main, ["run", "--", "echo", "hello"])
         assert result.exit_code == 0
         assert "hello" in result.output
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="echo is a shell built-in on Windows")
     def test_run_with_preset(self):
         result = self.runner.invoke(main, ["run", "--preset", "kubectl", "--", "echo", "metadata:\n  creationTimestamp: x\n  name: foo"])
         assert result.exit_code == 0
