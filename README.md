@@ -66,11 +66,15 @@ patterns:
 leanpipe run --preset terraform -- terraform plan
 ```
 
-## JSON Output (CI/agent consumption)
+## JSON & Streaming Output (CI/agent consumption)
 
 ```bash
 | leanpipe filter kubectl --json
 # {"output": "...", "saved_chars": 12000, "saved_pct": 87.5}
+
+| leanpipe filter kubectl --format jsonl
+# {"line": 1, "content": "items:"}
+# {"line": 2, "content": "- name: my-pod"}
 ```
 
 ## Validation
