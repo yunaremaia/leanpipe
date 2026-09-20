@@ -6,7 +6,7 @@ import sys
 import pytest
 from click.testing import CliRunner
 
-from leanpipe.cli import main
+from leanpipe.cli import format_jsonl, main
 from leanpipe.filters import (
     BUILTIN_PRESETS,
     FilterRule,
@@ -147,6 +147,55 @@ class TestCLI:
         assert "output" in data
         assert "saved_chars" in data
         assert "saved_pct" in data
+
+    def test_jsonl_output(self):
+        text = "items:\n- name: foo\n  managedFields: x\n- name: bar"
+        result = self.runner.invoke(main, ["filter", "kubectl", "--format", "jsonl"], input=text)
+        assert result.exit_code == 0
+        lines = [line for line in result.output.strip().splitlines() if line]
+        assert len(lines) >= 2
+        for line in lines:
+            data = json.loads(line)
+            assert isinstance(data, dict)
+            assert "line" in data
+            assert "content" in data
+            assert "managedFields" not in data["content"]
+
+    def test_jsonl_streaming(self):
+        import io
+        text = "line 1\nline 2\nline 3\n"
+        result = self.runner.invoke(main, ["filter", "--format", "jsonl"], input=text)
+        assert result.exit_code == 0
+        stream = io.StringIO(result.output)
+        streamed_records = []
+        for line in stream:
+            line_str = line.strip()
+            if line_str:
+                parsed = json.loads(line_str)
+                streamed_records.append(parsed)
+        assert len(streamed_records) == 3
+        assert [r["content"] for r in streamed_records] == ["line 1", "line 2", "line 3"]
+        assert [r["line"] for r in streamed_records] == [1, 2, 3]
+
+    def test_filter_jsonl_flag(self):
+        text = "entry1\nentry2"
+        result = self.runner.invoke(main, ["filter", "--jsonl"], input=text)
+        assert result.exit_code == 0
+        lines = [line for line in result.output.strip().splitlines() if line]
+        assert len(lines) == 2
+        assert json.loads(lines[0])["content"] == "entry1"
+        assert json.loads(lines[1])["content"] == "entry2"
+
+    def test_format_jsonl_function(self):
+        opportunities = [
+            {"id": 1, "title": "Opportunity 1"},
+            {"id": 2, "title": "Opportunity 2"},
+        ]
+        output = format_jsonl(opportunities)
+        lines = output.splitlines()
+        assert len(lines) == 2
+        assert json.loads(lines[0]) == opportunities[0]
+        assert json.loads(lines[1]) == opportunities[1]
 
     @pytest.mark.skipif(sys.platform == "win32", reason="echo is a shell built-in on Windows")
     def test_run_command(self):
