@@ -47,15 +47,25 @@ def load_plugin(path: Path) -> Plugin | None:
             data = yaml.safe_load(f)
         if not data:
             return None
-        rules = [
-            FilterRule(
-                name=r.get("name", f"rule_{i}"),
-                pattern=r["match"],
-                action=r.get("action", "drop_line"),
-                replacement=r.get("replacement"),
+
+        if not isinstance(data, dict):
+            raise ValueError(f"Plugin {path} must be a YAML object, got {type(data).__name__}")
+
+        rules = []
+        for i, r in enumerate(data.get("patterns", [])):
+            if not isinstance(r, dict):
+                raise ValueError(f"Rule {i} in {path} must be a mapping")
+            if "match" not in r:
+                raise ValueError(f"Rule {i} in {path} missing required 'match' field")
+            rules.append(
+                FilterRule(
+                    name=r.get("name", f"rule_{i}"),
+                    pattern=r["match"],
+                    action=r.get("action", "drop_line"),
+                    replacement=r.get("replacement"),
+                )
             )
-            for i, r in enumerate(data.get("patterns", []))
-        ]
+
         return Plugin(
             name=data.get("name", path.stem),
             description=data.get("description", ""),
@@ -63,10 +73,8 @@ def load_plugin(path: Path) -> Plugin | None:
             rules=rules,
             aggressiveness=data.get("aggressiveness", 1),
         )
-    except Exception as e:
-        import warnings
-        warnings.warn(f"Failed to load plugin {path}: {e}")
-        return None
+    except yaml.YAMLError as e:
+        raise ValueError(f"Invalid YAML in {path}: {e}") from e
 
 
 def discover_plugins() -> list[Plugin]:
