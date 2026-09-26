@@ -84,3 +84,7 @@ Inspired by [lowfat](https://github.com/zdk/lowfat) (Rust), which saved 91.8% of
 ## License
 
 MIT
+
+# leanpipe
+
+![CI](https://github.com/yunaremaia/leanpipe/actions/workflows/ci.yml/badge.svg)
