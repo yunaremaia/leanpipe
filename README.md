@@ -11,9 +11,9 @@ AI coding agents waste tokens on verbose CLI output. A single `kubectl get -o ya
 ## Install
 
 ```bash
-pip install leanpipe
+pip install git+https://github.com/yunaremaia/leanpipe.git
 # or
-uv tool install leanpipe
+uv tool install git+https://github.com/yunaremaia/leanpipe.git
 ```
 
 ## Quick Start
