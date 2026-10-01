@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import os
 import re
-from functools import lru_cache
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
-from typing import Callable
 
 import yaml
 
@@ -52,7 +51,15 @@ def load_plugin(path: Path) -> Plugin | None:
             raise ValueError(f"Plugin {path} must be a YAML object, got {type(data).__name__}")
 
         rules = []
-        for i, r in enumerate(data.get("patterns", [])):
+        # `patterns:` with no value parses as None, which would make the
+        # enumerate() below raise TypeError. load_plugin's contract is that any
+        # malformed plugin raises ValueError, so normalise it here.
+        patterns = data.get("patterns") or []
+        if not isinstance(patterns, list):
+            raise ValueError(
+                f"'patterns' in {path} must be a list, got {type(patterns).__name__}"
+            )
+        for i, r in enumerate(patterns):
             if not isinstance(r, dict):
                 raise ValueError(f"Rule {i} in {path} must be a mapping")
             if "match" not in r:
@@ -105,14 +112,18 @@ def apply_plugin(text: str, plugin: Plugin, level: int = 2) -> str:
 
     lines = text.split("\n")
     result = []
-    skip_depth = 0
+    # -1 is the "not currently skipping" sentinel. It cannot be 0, because 0
+    # is itself a valid block depth: a marker line at column 0 (e.g. `^metadata:`)
+    # would store depth 0, which the guard below reads as "not skipping" -- the
+    # block header was dropped but every one of its children survived.
+    skip_depth = -1
 
     for line in lines:
-        if skip_depth > 0:
+        if skip_depth >= 0:
             # Check if we're back at top level (less indent)
             stripped = line.lstrip()
             if stripped and len(line) - len(line.lstrip()) <= skip_depth:
-                skip_depth = 0
+                skip_depth = -1
             else:
                 continue
 

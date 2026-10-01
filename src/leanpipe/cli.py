@@ -71,7 +71,15 @@ def filter(preset, level, json_output, output_format, jsonl, plugins):
             click.echo(format_jsonl(records))
     elif json_output or fmt == "json":
         saved = len(text) - len(result)
-        click.echo(json.dumps({"output": result, "saved_chars": saved, "saved_pct": round(saved / max(len(text), 1) * 100, 1)}))
+        click.echo(
+            json.dumps(
+                {
+                    "output": result,
+                    "saved_chars": saved,
+                    "saved_pct": round(saved / max(len(text), 1) * 100, 1),
+                }
+            )
+        )
     else:
         click.echo(result, nl=False)
 

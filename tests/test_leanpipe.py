@@ -1,6 +1,6 @@
 """Tests for leanpipe."""
+import io
 import json
-import subprocess
 import sys
 
 import pytest
@@ -64,6 +64,17 @@ class TestBuiltinPresets:
         text = "items:\n- name: foo\n  managedFields:\n  - a: 1\n  - b: 2"
         result = filter_text(text, preset_name="kubectl")
         assert "managedFields" not in result
+
+    def test_preset_registry_is_consistent(self):
+        """Every registered preset resolves to a usable Plugin."""
+        for name in BUILTIN_PRESETS:
+            preset = get_builtin_preset(name)
+            assert preset is not None
+            assert preset.name == name
+            assert preset.command == name
+
+    def test_unknown_preset_lookup_returns_none(self):
+        assert get_builtin_preset("no-such-preset") is None
 
     def test_kubectl_drops_annotations(self):
         text = "metadata:\n  annotations:\n    note: xyz\n  name: foo"
@@ -162,7 +173,6 @@ class TestCLI:
             assert "managedFields" not in data["content"]
 
     def test_jsonl_streaming(self):
-        import io
         text = "line 1\nline 2\nline 3\n"
         result = self.runner.invoke(main, ["filter", "--format", "jsonl"], input=text)
         assert result.exit_code == 0
@@ -205,7 +215,17 @@ class TestCLI:
 
     @pytest.mark.skipif(sys.platform == "win32", reason="echo is a shell built-in on Windows")
     def test_run_with_preset(self):
-        result = self.runner.invoke(main, ["run", "--preset", "kubectl", "--", "echo", "metadata:\n  creationTimestamp: x\n  name: foo"])
+        result = self.runner.invoke(
+            main,
+            [
+                "run",
+                "--preset",
+                "kubectl",
+                "--",
+                "echo",
+                "metadata:\n  creationTimestamp: x\n  name: foo",
+            ],
+        )
         assert result.exit_code == 0
         assert "creationTimestamp" not in result.output
         assert "name: foo" in result.output

@@ -31,3 +31,29 @@ leanpipe = "leanpipe.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/yunaremaia/leanpipe"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# The lint gate is pinned explicitly rather than relying on ruff's default rule
+# set: the defaults change between ruff releases, so an unpinned `ruff check .`
+# would make CI pass or fail based on nothing but the installed version.
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "SIM",  # flake8-simplify
+    "C4",   # flake8-comprehensions
+    "RUF",  # ruff-specific
+]
+# BLE001 and PL* are intentionally not enabled: run_command() deliberately
+# wraps subprocess failures for the CLI, and narrowing those catches changes
+# runtime error behaviour rather than fixing a defect.
