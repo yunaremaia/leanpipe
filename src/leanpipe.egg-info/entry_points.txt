@@ -1,2 +1,0 @@
-[console_scripts]
-leanpipe = leanpipe.cli:main
